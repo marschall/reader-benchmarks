@@ -1,0 +1,1 @@
+$JAVA_HOME/bin/java -cp target/benchmarks.jar -Djmh.blackhole.mode=COMPILER com.github.marschall.readerbenchmarks.Main
