@@ -16,7 +16,7 @@ public class Main {
         .warmupIterations(3)
         .measurementIterations(5)
         .resultFormat(ResultFormatType.TEXT)
-//        .addProfiler(HotspotMemoryProfiler.class)
+        .addProfiler("hs_gc")
         .jvmArgsAppend("-Djmh.blackhole.mode=COMPILER")
         .build();
     new Runner(options).run();

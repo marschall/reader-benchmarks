@@ -1,18 +1,15 @@
 package com.github.marschall.readerbenchmarks;
 
-import static java.nio.charset.CodingErrorAction.REPLACE;
-import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.util.concurrent.TimeUnit.MICROSECONDS;
 import static org.openjdk.jmh.annotations.Level.Trial;
 import static org.openjdk.jmh.annotations.Mode.Throughput;
 import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.CharsetDecoder;
 import java.util.Arrays;
 
 import org.openjdk.jmh.annotations.Benchmark;
@@ -30,13 +27,11 @@ public class InputStreamReaderBenchmarks {
   @State(Benchmark)
   public static class ReaderState {
 
-    private CharsetDecoder decoder;
-
     private CharBuffer heapBuffer;
 
     private CharBuffer directBuffer;
 
-    private ByteArrayInputStream inputStream;
+    private InputStreamReader reader;
 
     @Param({"128", "1024", "1048576"})
     int targetBufferSize;
@@ -48,12 +43,8 @@ public class InputStreamReaderBenchmarks {
     public void doSetup() throws IOException {
       byte[] bytes = new byte[this.inputSize];
       Arrays.fill(bytes, (byte) 'A');
-      this.inputStream = new ByteArrayInputStream(bytes);
-      this.inputStream.mark(this.inputSize);
+      this.reader = new InputStreamReader(new ConstantInputStream(this.inputSize));
 
-      this.decoder = US_ASCII.newDecoder()
-              .onMalformedInput(REPLACE)
-              .onUnmappableCharacter(REPLACE);
       this.heapBuffer = CharBuffer.allocate(this.targetBufferSize);
       this.directBuffer = ByteBuffer.allocateDirect(this.targetBufferSize * 2).asCharBuffer();
     }
@@ -62,38 +53,60 @@ public class InputStreamReaderBenchmarks {
 
   @Benchmark
   public void readHeapBuffer(ReaderState state, Blackhole blackhole) throws IOException {
-    state.decoder.reset();
-    state.inputStream.reset();
-    InputStreamReader reader = new InputStreamReader(state.inputStream, state.decoder);
-
-    if (state.inputSize > state.targetBufferSize) {
-      int iterations = state.inputSize / state.targetBufferSize;
-      for (int i = 0; i < iterations; i++) {
-        state.heapBuffer.clear();
-        blackhole.consume(reader.read(state.heapBuffer));
+    state.heapBuffer.clear();
+    int remaining = state.targetBufferSize;
+    do {
+      int nread = state.reader.read(state.heapBuffer);
+      blackhole.consume(nread);
+      if (nread > 0) {
+        remaining -= nread;
       }
-    } else {
-      state.heapBuffer.clear();
-      blackhole.consume(reader.read(state.heapBuffer));
-    }
+      if (nread == -1) {
+        break;
+      }
+    } while (remaining > 0);
   }
 
   @Benchmark
   public void readDirectBuffer(ReaderState state, Blackhole blackhole) throws IOException {
-    state.decoder.reset();
-    state.inputStream.reset();
-    InputStreamReader reader = new InputStreamReader(state.inputStream, state.decoder);
-
-    if (state.inputSize > state.targetBufferSize) {
-      int iterations = state.inputSize / state.targetBufferSize;
-      for (int i = 0; i < iterations; i++) {
-        state.directBuffer.clear();
-        blackhole.consume(reader.read(state.directBuffer));
+    state.directBuffer.clear();
+    int remaining = state.targetBufferSize;
+    do {
+      int nread = state.reader.read(state.directBuffer);
+      blackhole.consume(nread);
+      if (nread > 0) {
+        remaining -= nread;
       }
-    } else {
-      state.directBuffer.clear();
-      blackhole.consume(reader.read(state.directBuffer));
+      if (nread == -1) {
+        break;
+      }
+    } while (remaining > 0);
+  }
+
+  /**
+   * A simple infinite input stream for benchmark purposes that always returns the byte.
+   */
+  static final class ConstantInputStream extends InputStream {
+
+    private final int readSize;
+
+    ConstantInputStream(int readSize) {
+      this.readSize = readSize;
     }
+
+    @Override
+    public int read() throws IOException {
+      return (byte) 'J';
+    }
+
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+
+      int fillLenght = Math.min(len, this.readSize);
+      Arrays.fill(b, off, fillLenght, (byte) 'J');
+      return fillLenght;
+    }
+
   }
 
 }

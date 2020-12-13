@@ -6,9 +6,10 @@ import static org.openjdk.jmh.annotations.Mode.Throughput;
 import static org.openjdk.jmh.annotations.Scope.Benchmark;
 
 import java.io.IOException;
-import java.io.StringReader;
+import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.util.Arrays;
 
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -16,6 +17,7 @@ import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.infra.Blackhole;
 
 @BenchmarkMode(Throughput)
 @OutputTimeUnit(MICROSECONDS)
@@ -24,7 +26,7 @@ public class ReaderBenchmarks {
   @State(Benchmark)
   public static class ReaderState {
 
-    private StringReader reader;
+    private Reader reader;
 
     private CharBuffer heapBuffer;
 
@@ -38,8 +40,7 @@ public class ReaderBenchmarks {
 
     @Setup(Trial)
     public void doSetup() throws IOException {
-      this.reader = new StringReader("a".repeat(this.inputSize));
-      this.reader.mark(this.targetBufferSize);
+      this.reader = new ConstantReader(this.inputSize);
 
       this.heapBuffer = CharBuffer.allocate(this.targetBufferSize);
       this.directBuffer = ByteBuffer.allocateDirect(this.targetBufferSize * 2).asCharBuffer();
@@ -48,19 +49,68 @@ public class ReaderBenchmarks {
   }
 
   @Benchmark
-  public int readHeapBuffer(ReaderState state) throws IOException {
+  public void readHeapBuffer(ReaderState state, Blackhole blackhole) throws IOException {
     state.heapBuffer.clear();
-    state.reader.reset();
-
-    return state.reader.read(state.heapBuffer);
+    int remaining = state.targetBufferSize;
+    do {
+      int nread = state.reader.read(state.heapBuffer);
+      blackhole.consume(nread);
+      if (nread > 0) {
+        remaining -= nread;
+      }
+      if (nread == -1) {
+        break;
+      }
+    } while (remaining > 0);
   }
 
   @Benchmark
-  public int readDirectBuffer(ReaderState state) throws IOException {
+  public void readDirectBuffer(ReaderState state, Blackhole blackhole) throws IOException {
     state.directBuffer.clear();
-    state.reader.reset();
+    int remaining = state.targetBufferSize;
+    do {
+      int nread = state.reader.read(state.directBuffer);
+      blackhole.consume(nread);
+      if (nread > 0) {
+        remaining -= nread;
+      }
+      if (nread == -1) {
+        break;
+      }
+    } while (remaining > 0);
+  }
 
-    return state.reader.read(state.directBuffer);
+  /**
+   * A simple infinite reader for benchmark purposes that always returns the same character.
+   */
+  static final class ConstantReader extends Reader {
+
+    private final int readSize;
+
+    ConstantReader(int readSize) {
+      this.readSize = readSize;
+    }
+
+    // intentionally don't override #read(CharBuffer) as this is the method we want to benchmark
+
+    @Override
+    public int read() throws IOException {
+      return 'J';
+    }
+
+    @Override
+    public int read(char[] cbuf, int off, int len) throws IOException {
+      int fillLenght = Math.min(len, this.readSize);
+      // in theory we could leave this out as we only want to benchmark the #read(CharBuffer) method
+      Arrays.fill(cbuf, off, fillLenght, 'a');
+      return fillLenght;
+    }
+
+    @Override
+    public void close() throws IOException {
+      // ignore
+    }
+
   }
 
 }
