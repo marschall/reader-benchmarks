@@ -1,1 +1,1 @@
-$JAVA_HOME/bin/java -cp target/benchmarks.jar --add-exports java.management/sun.management=ALL-UNNAMED --add-opens java.management/sun.management=ALL-UNNAMED -Djmh.blackhole.mode=COMPILER com.github.marschall.readerbenchmarks.Main
+$JAVA_HOME/bin/java -cp target/benchmarks.jar  -Djmh.blackhole.mode=COMPILER com.github.marschall.readerbenchmarks.Main 4926314-after
