@@ -13,10 +13,13 @@ public class Main {
     Options options = new OptionsBuilder()
         .include("com\\.github\\.marschall\\.readerbenchmarks\\..*Benchmarks")
         .forks(1)
-        .warmupIterations(3)
-        .measurementIterations(5)
+//        .warmupIterations(3)
+//        .measurementIterations(5)
+        .warmupIterations(1)
+        .measurementIterations(1)
         .resultFormat(ResultFormatType.TEXT)
-        .addProfiler("hs_gc")
+//        .addProfiler("hs_gc")
+        .addProfiler("gc")
         .build();
     new Runner(options).run();
   }

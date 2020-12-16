@@ -1,6 +1,6 @@
 package com.github.marschall.readerbenchmarks;
 
-import static java.util.concurrent.TimeUnit.MICROSECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.openjdk.jmh.annotations.Level.Trial;
 import static org.openjdk.jmh.annotations.Mode.Throughput;
 import static org.openjdk.jmh.annotations.Scope.Benchmark;
@@ -21,7 +21,7 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.infra.Blackhole;
 
 @BenchmarkMode(Throughput)
-@OutputTimeUnit(MICROSECONDS)
+@OutputTimeUnit(MILLISECONDS)
 public class InputStreamReaderBenchmarks {
 
   @State(Benchmark)
