@@ -36,11 +36,11 @@ public class ReaderBenchmarks {
     int targetBufferSize;
 
     @Param({"128", "1024", "1048576"})
-    int inputSize;
+    int transferSize;
 
     @Setup(Trial)
     public void doSetup() throws IOException {
-      this.reader = new ConstantReader(this.inputSize);
+      this.reader = new ConstantReader(this.transferSize);
 
       this.heapBuffer = CharBuffer.allocate(this.targetBufferSize);
       this.directBuffer = ByteBuffer.allocateDirect(this.targetBufferSize * 2).asCharBuffer();
@@ -85,10 +85,10 @@ public class ReaderBenchmarks {
    */
   static final class ConstantReader extends Reader {
 
-    private final int readSize;
+    private final int transferSize;
 
-    ConstantReader(int readSize) {
-      this.readSize = readSize;
+    ConstantReader(int transferSize) {
+      this.transferSize = transferSize;
     }
 
     // intentionally don't override #read(CharBuffer) as this is the method we want to benchmark
@@ -100,10 +100,10 @@ public class ReaderBenchmarks {
 
     @Override
     public int read(char[] cbuf, int off, int len) throws IOException {
-      int fillLenght = Math.min(len, this.readSize);
+      int fillLen = Math.min(len, this.transferSize);
       // in theory we could leave this out as we only want to benchmark the #read(CharBuffer) method
-      Arrays.fill(cbuf, off, fillLenght, 'a');
-      return fillLenght;
+      Arrays.fill(cbuf, off, off + fillLen, 'a');
+      return fillLen;
     }
 
     @Override

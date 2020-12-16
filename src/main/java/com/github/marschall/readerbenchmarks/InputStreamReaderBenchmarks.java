@@ -37,13 +37,13 @@ public class InputStreamReaderBenchmarks {
     int targetBufferSize;
 
     @Param({"128", "1024", "1048576"})
-    int inputSize;
+    int transferSize;
 
     @Setup(Trial)
     public void doSetup() throws IOException {
-      byte[] bytes = new byte[this.inputSize];
+      byte[] bytes = new byte[this.transferSize];
       Arrays.fill(bytes, (byte) 'A');
-      this.reader = new InputStreamReader(new ConstantInputStream(this.inputSize));
+      this.reader = new InputStreamReader(new ConstantInputStream(this.transferSize));
 
       this.heapBuffer = CharBuffer.allocate(this.targetBufferSize);
       this.directBuffer = ByteBuffer.allocateDirect(this.targetBufferSize * 2).asCharBuffer();
@@ -88,10 +88,10 @@ public class InputStreamReaderBenchmarks {
    */
   static final class ConstantInputStream extends InputStream {
 
-    private final int readSize;
+    private final int transferSize;
 
-    ConstantInputStream(int readSize) {
-      this.readSize = readSize;
+    ConstantInputStream(int transferSize) {
+      this.transferSize = transferSize;
     }
 
     @Override
@@ -102,9 +102,9 @@ public class InputStreamReaderBenchmarks {
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
 
-      int fillLenght = Math.min(len, this.readSize);
-      Arrays.fill(b, off, fillLenght, (byte) 'J');
-      return fillLenght;
+      int fillLen = Math.min(len, this.transferSize);
+      Arrays.fill(b, off, off + fillLen, (byte) 'J');
+      return fillLen;
     }
 
   }

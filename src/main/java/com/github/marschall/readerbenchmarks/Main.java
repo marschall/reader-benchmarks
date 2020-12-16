@@ -11,13 +11,12 @@ public class Main {
 
   public static void main(String[] args) throws RunnerException {
     Options options = new OptionsBuilder()
-        .include(".*((ReaderBenchmarks)|(InputStreamReaderBenchmarks)).*")
+        .include("com\\.github\\.marschall\\.readerbenchmarks\\..*Benchmarks")
         .forks(1)
         .warmupIterations(3)
         .measurementIterations(5)
         .resultFormat(ResultFormatType.TEXT)
         .addProfiler("hs_gc")
-        .jvmArgsAppend("-Djmh.blackhole.mode=COMPILER")
         .build();
     new Runner(options).run();
   }
