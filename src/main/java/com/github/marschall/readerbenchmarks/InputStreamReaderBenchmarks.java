@@ -39,11 +39,14 @@ public class InputStreamReaderBenchmarks {
     @Param({"128", "1024", "1048576"})
     int transferSize;
 
+    @Param({"US-ASCII", "ISO-8859-1", "UTF-8"})
+    String charsetName;
+
     @Setup(Trial)
     public void doSetup() throws IOException {
       byte[] bytes = new byte[this.transferSize];
       Arrays.fill(bytes, (byte) 'A');
-      this.reader = new InputStreamReader(new ConstantInputStream(this.transferSize));
+      this.reader = new InputStreamReader(new ConstantInputStream(this.transferSize), this.charsetName);
 
       this.heapBuffer = CharBuffer.allocate(this.targetBufferSize);
       this.directBuffer = ByteBuffer.allocateDirect(this.targetBufferSize * 2).asCharBuffer();
@@ -105,6 +108,11 @@ public class InputStreamReaderBenchmarks {
       int fillLen = Math.min(len, this.transferSize);
       Arrays.fill(b, off, off + fillLen, (byte) 'J');
       return fillLen;
+    }
+
+    @Override
+    public int available() throws IOException {
+      return this.transferSize;
     }
 
   }
