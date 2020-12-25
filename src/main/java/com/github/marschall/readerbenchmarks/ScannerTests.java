@@ -71,8 +71,8 @@ public class ScannerTests {
   }
 
   public static void main(String[] args) throws IOException, RunnerException {
-    runScanner();
-    //    runJmh();
+//    runScanner();
+    runJmh();
   }
 
   private static void runScanner() throws IOException {
@@ -96,8 +96,8 @@ public class ScannerTests {
 
 
     // run scanner
-//        runScanner(ForConstantInputStream::new);
-    //    runScanner(VarHanleConstantInputStream::new);
+    runScanner(ForConstantInputStream::new);
+    runScanner(VarHanleConstantInputStream::new);
     runScanner(HandUnrolledConstantInputStream::new);
   }
 
