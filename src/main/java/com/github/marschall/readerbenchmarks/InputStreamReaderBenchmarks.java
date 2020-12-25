@@ -104,7 +104,8 @@ public class InputStreamReaderBenchmarks {
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-
+      // lacks argument checks as this code is only used for benchmarks
+      // we assume JDK classes call us correctly
       int fillLen = Math.min(len, this.transferSize);
       Arrays.fill(b, off, off + fillLen, (byte) 'J');
       return fillLen;

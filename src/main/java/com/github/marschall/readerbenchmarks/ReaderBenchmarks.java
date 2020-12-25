@@ -100,6 +100,8 @@ public class ReaderBenchmarks {
 
     @Override
     public int read(char[] cbuf, int off, int len) throws IOException {
+      // lacks argument checks as this code is only used for benchmarks
+      // we assume JDK classes call us correctly
       int fillLen = Math.min(len, this.transferSize);
       // in theory we could leave this out as we only want to benchmark the #read(CharBuffer) method
       Arrays.fill(cbuf, off, off + fillLen, 'a');
