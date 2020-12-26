@@ -12,16 +12,14 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Scanner;
-import java.util.regex.Pattern;
-
 import java.util.function.IntFunction;
+import java.util.regex.Pattern;
 
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
@@ -38,6 +36,8 @@ public class ScannerTests {
 
   private ForConstantInputStream forConstantInputStream;
 
+  private HandUnrolledConstantInputStream handUnrolledConstantInputStream;
+
   private byte[] b;
 
   private Scanner scanner;
@@ -48,6 +48,7 @@ public class ScannerTests {
     this.b = new byte[bufferSize];
     this.varHanleConstantInputStream = new VarHanleConstantInputStream(bufferSize);
     this.forConstantInputStream = new ForConstantInputStream(bufferSize);
+    this.handUnrolledConstantInputStream = new HandUnrolledConstantInputStream(bufferSize);
     this.scanner = new Scanner("J J");
     this.scanner.useDelimiter(" ");
   }
@@ -64,10 +65,10 @@ public class ScannerTests {
     return this.b;
   }
 
-  public void scan(Blackhole blackhole) {
-    if (scanner.hasNext(J_PATTERN)) {
-      blackhole.consume(scanner.next(J_PATTERN));
-    }
+  @Benchmark
+  public byte[] handUnrolledConstantInputStream() throws IOException {
+    this.handUnrolledConstantInputStream.read(this.b);
+    return this.b;
   }
 
   public static void main(String[] args) throws IOException, RunnerException {
@@ -197,13 +198,13 @@ public class ScannerTests {
       int varHandleBase = off + prefillLen;
       long pattern = even ? EVEN_PATTERN : ODD_PATTERN;
       for (int i = 0; i < loopIterations; i++) {
-        // the VarHandle uses the index of the byte, not the long 
-        LONG_ARRAY_HANDLE.set(b, varHandleBase + i * 8, pattern);
+        // the VarHandle uses the index of the byte, not the long
+        LONG_ARRAY_HANDLE.set(b, varHandleBase + (i * 8), pattern);
       }
       remaining -= loopIterations * 8;
 
       // epilogue, fill rest
-      int epilogueBase = varHandleBase + loopIterations * 8;
+      int epilogueBase = varHandleBase + (loopIterations * 8);
       for (int i = 0; i < remaining; i++) {
         byte value;
         if (((i & 1) == 0L) == even) {
@@ -284,7 +285,7 @@ public class ScannerTests {
       int loopBase = off + prefillLen;
       if (even) {
         for (int i = 0; i < loopIterations; i++) {
-          int base = loopBase + i * 8;
+          int base = loopBase + (i * 8);
           b[base] = 'J';
           b[base + 1] = ' ';
           b[base + 2] = 'J';
@@ -296,7 +297,7 @@ public class ScannerTests {
         }
       } else {
         for (int i = 0; i < loopIterations; i++) {
-          int base = loopBase + i * 8;
+          int base = loopBase + (i * 8);
           b[base] = ' ';
           b[base + 1] = 'J';
           b[base + 2] = ' ';
@@ -310,7 +311,7 @@ public class ScannerTests {
       remaining -= loopIterations * 8;
 
       // epilogue, fill rest
-      int epilogueBase = loopBase + loopIterations * 8;
+      int epilogueBase = loopBase + (loopIterations * 8);
       for (int i = 0; i < remaining; i++) {
         byte value;
         if (((i & 1) == 0L) == even) {
@@ -359,7 +360,7 @@ public class ScannerTests {
       // lacks argument checks as this code is only used for benchmarks
       // we assume JDK classes call us correctly
       int fillLen = Math.min(len, this.transferSize);
-      
+
       boolean even = (this.totalRead & 1) == 0L;
 
       for (int i = 0; i < fillLen; i++) {
