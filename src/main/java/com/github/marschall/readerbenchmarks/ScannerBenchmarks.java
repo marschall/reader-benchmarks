@@ -41,7 +41,7 @@ public class ScannerBenchmarks {
 
   @Benchmark
   public void scan(Blackhole blackhole) {
-    if (this.scanner.hasNext(J_PATTERN)) {
+    if (this.scanner.hasNext()) {
       blackhole.consume(this.scanner.next(J_PATTERN));
     }
   }

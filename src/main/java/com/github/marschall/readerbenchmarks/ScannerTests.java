@@ -30,8 +30,6 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 @State(Benchmark)
 public class ScannerTests {
 
-  private static final Pattern J_PATTERN = Pattern.compile("J");
-
   private VarHanleConstantInputStream varHanleConstantInputStream;
 
   private ForConstantInputStream forConstantInputStream;
@@ -107,11 +105,18 @@ public class ScannerTests {
       int i = 0;
       scanner.useDelimiter(" ");
       Pattern pattern = Pattern.compile("J");
-      while ((i < 10) && scanner.hasNext(pattern)) {
+      while ((i < 10) && scanner.hasNext()) {
         String token = scanner.next(pattern);
         System.out.println(token);
         i += 1;
       }
+//      while ((i < 100_000_000) && scanner.hasNext()) {
+//        String token = scanner.next(pattern);
+//        if (token.hashCode() == 0L) {
+//          System.out.println(token);
+//        }
+//        i += 1;
+//      }
     }
   }
 
@@ -121,6 +126,9 @@ public class ScannerTests {
         .forks(1)
         .warmupIterations(3)
         .measurementIterations(5)
+        .addProfiler("gc")
+        .addProfiler("hs_gc")
+        .jvmArgsAppend("--add-exports", "java.management/sun.management=ALL-UNNAMED", "--add-opens", "java.management/sun.management=ALL-UNNAMED")
         //        .resultFormat(ResultFormatType.TEXT)
         .build();
     new Runner(options).run();
