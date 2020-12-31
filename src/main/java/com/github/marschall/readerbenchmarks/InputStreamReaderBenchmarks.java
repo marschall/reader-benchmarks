@@ -44,8 +44,6 @@ public class InputStreamReaderBenchmarks {
 
     @Setup(Trial)
     public void doSetup() throws IOException {
-      byte[] bytes = new byte[this.transferSize];
-      Arrays.fill(bytes, (byte) 'A');
       this.reader = new InputStreamReader(new ConstantInputStream(this.transferSize), this.charsetName);
 
       this.heapBuffer = CharBuffer.allocate(this.targetBufferSize);
