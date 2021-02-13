@@ -7,7 +7,6 @@ import static org.openjdk.jmh.annotations.Scope.Benchmark;
 import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.util.Arrays;
@@ -22,7 +21,7 @@ import org.openjdk.jmh.annotations.State;
 @BenchmarkMode(Throughput)
 @OutputTimeUnit(MICROSECONDS)
 @State(Benchmark)
-public class CharsequenceReaderBenchmarks {
+public class CharArrayReaderBenchmarks {
 
   private CharBuffer charBuffer;
 
@@ -34,8 +33,6 @@ public class CharsequenceReaderBenchmarks {
 
   @Param({"128", "1024"})
   int transferSize;
-
-  private Reader stringReader;
 
   private Reader charArrayReader;
 
@@ -52,8 +49,6 @@ public class CharsequenceReaderBenchmarks {
     } else {
       c = this.createNonLatin1Array(this.transferSize);
     }
-    this.stringReader = new StringReader(new String(c));
-    this.stringReader.mark(this.transferSize);
     this.charArrayReader = new CharArrayReader(c);
     this.charArrayReader.mark(this.transferSize);
   }
@@ -71,14 +66,7 @@ public class CharsequenceReaderBenchmarks {
   }
 
   @Benchmark
-  public int readStringReader() throws IOException {
-    this.charBuffer.clear();
-    this.stringReader.reset();
-    return this.stringReader.read(this.charBuffer);
-  }
-
-  @Benchmark
-  public int readCharArrayReader() throws IOException {
+  public int read() throws IOException {
     this.charBuffer.clear();
     this.charArrayReader.reset();
     return this.charArrayReader.read(this.charBuffer);
